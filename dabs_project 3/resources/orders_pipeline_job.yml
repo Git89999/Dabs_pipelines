@@ -1,0 +1,46 @@
+resources:
+  jobs:
+    orders_medallion_pipeline:
+      name: orders_medallion_pipeline
+      # No job_clusters / existing_cluster_id / new_cluster block is defined below.
+      # Leaving compute unspecified means each task runs on Serverless compute
+      # (this is the default behavior on Databricks Free Edition workspaces).
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"   # every day at 6:00 AM
+        timezone_id: "Asia/Kolkata"
+        pause_status: UNPAUSED                  # set to PAUSED to disable without deleting
+
+      tasks:
+        - task_key: land_to_volume
+          notebook_task:
+            notebook_path: ../src/notebooks/00_land_to_volume.ipynb
+            base_parameters:
+              environment_name: ${bundle.target}
+              volume_path: /Volumes/delta_lake_catalog/default/deltalake_volume
+              source_table: samples.tpch.orders
+
+        - task_key: bronze
+          depends_on:
+            - task_key: land_to_volume
+          notebook_task:
+            notebook_path: ../src/notebooks/01_bronze.ipynb
+            base_parameters:
+              environment_name: ${bundle.target}
+              volume_path: /Volumes/delta_lake_catalog/default/deltalake_volume
+
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: ../src/notebooks/02_silver.ipynb
+            base_parameters:
+              environment_name: ${bundle.target}
+
+        - task_key: gold
+          depends_on:
+            - task_key: silver
+          notebook_task:
+            notebook_path: ../src/notebooks/03_gold.ipynb
+            base_parameters:
+              environment_name: ${bundle.target}

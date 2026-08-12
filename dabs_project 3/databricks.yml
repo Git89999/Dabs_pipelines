@@ -1,0 +1,26 @@
+# Databricks Asset Bundle definition for the Orders Medallion pipeline project.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+#
+# NOTE: This project is notebook-only - there is deliberately no `artifacts:`
+# (wheel-build) block here, since that requires an actual Python package and
+# will fail with a "no files to ship" error on a notebooks-only project.
+
+bundle:
+  name: orders_medallion_pipeline
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      # Replace with your own Free Edition workspace URL if different
+      host: https://dbc-11b8e49f-a046.cloud.databricks.com
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-11b8e49f-a046.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
